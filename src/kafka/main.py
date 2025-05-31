@@ -1,6 +1,7 @@
 import yaml
 from confluent_kafka.admin import AdminClient, NewTopic
 from typing import List
+import os
 
 def load_topic_config(file_path: str) -> List[dict]:
     try:
@@ -13,7 +14,7 @@ def load_topic_config(file_path: str) -> List[dict]:
 
 def create_kafka_topic():
     conf = {
-        'bootstrap.servers': 'localhost:9092'
+        'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
     }
 
     admin_client = AdminClient(conf)
@@ -43,7 +44,7 @@ def create_kafka_topic():
         except Exception as e:
             print(f"Failed to create topics: {e}")
 
-    existing_topics = admin_client.list_topics().topics
+    existing_topics = admin_client.list_topics(timeout=10).topics
     for topic in new_topics:
         if topic.topic in existing_topics:
             print(f"Topic '{topic.topic}' is listed in Kafka")
