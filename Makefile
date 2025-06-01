@@ -6,7 +6,10 @@ clear_helm:
 	helm repo remove bitnami
 
 build:
-	docker build -t local/kafka -f src/kafka/Dockerfile src/kafka/
+	docker build -t local/kafka -f src/kafka-init/Dockerfile src/kafka-init/
+	docker build -t local/producer -f src/kafka-producer-api/Dockerfile src/kafka-producer-api/
+	docker build -t local/consumer -f src/kafka-consumer/Dockerfile src/kafka-consumer/
+
 
 start_deps:
 	helm install bitnami bitnami/kafka -n streaming --create-namespace -f helm/kafka/values-local.yaml
