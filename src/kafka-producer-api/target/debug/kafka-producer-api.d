@@ -1,1 +1,0 @@
-/mnt/c/Users/adrie/OneDrive/Bureau/IT/projects/kafka_streaming_api/src/kafka-producer-api/target/debug/kafka-producer-api: /mnt/c/Users/adrie/OneDrive/Bureau/IT/projects/kafka_streaming_api/src/kafka-producer-api/src/main.rs

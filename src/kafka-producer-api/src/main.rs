@@ -9,6 +9,7 @@ use tokio::time;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let producer: FutureProducer = ClientConfig::new()
         .set("bootstrap.servers", "localhost:30001")
+        .set("enable.idempotence", "true")
         .create()
         .expect("Error producer");
 
