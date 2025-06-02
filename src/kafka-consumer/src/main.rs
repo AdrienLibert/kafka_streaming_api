@@ -6,7 +6,7 @@ use serde_json::Value;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bootstrap_servers = std::env::var("KAFKA_BOOTSTRAP_SERVERS")
-        .unwrap_or("localhost:30001".to_string());
+        .expect("KAFKA_BOOTSTRAP_SERVERS environment variable must be set");
     let consumer: StreamConsumer = ClientConfig::new()
         .set("bootstrap.servers", &bootstrap_servers)
         .set("group.id", "binance-consumer-group")

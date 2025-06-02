@@ -7,8 +7,10 @@ use tokio::time;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let bootstrap_servers = std::env::var("KAFKA_BOOTSTRAP_SERVERS")
+        .expect("KAFKA_BOOTSTRAP_SERVERS environment variable must be set");
     let producer: FutureProducer = ClientConfig::new()
-        .set("bootstrap.servers", "localhost:30001")
+        .set("bootstrap.servers", &bootstrap_servers)
         .set("enable.idempotence", "true")
         .create()
         .expect("Error producer");
@@ -21,9 +23,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         interval.tick().await;
 
-        let response = client.get(url).send().await?.json::<Value>().await?;
-        
-        let payload = serde_json::to_string(&response)?;
+        let response = match client.get(url).send().await {
+            Ok(resp) => match resp.json::<Value>().await {
+                Ok(json) => json,
+                Err(e) => {
+                    eprintln!("Error parsing Binance response: {:?}", e);
+                    continue;
+                }
+            },
+            Err(e) => {
+                eprintln!("Error fetching Binance data: {:?}", e);
+                tokio::time::sleep(Duration::from_secs(5)).await;
+                continue;
+            }
+        };
+
+        let payload = match serde_json::to_string(&response) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("Error serializing payload: {:?}", e);
+                continue;
+            }
+        };
 
         let topic = "binance-depth";
         let record = FutureRecord::to(topic)
