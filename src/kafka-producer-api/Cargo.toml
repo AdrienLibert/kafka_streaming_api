@@ -3,6 +3,10 @@ name = "kafka-producer-api"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "kafka-producer-api"
+path = "src"
+
 [dependencies]
 rdkafka = { version = "0.37.0", features = ["cmake-build"] }
 tokio = { version = "1.45.1", features = ["full"] }

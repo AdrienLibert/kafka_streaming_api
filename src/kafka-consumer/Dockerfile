@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY . /app
+COPY *.rs /app/src
+COPY Cargo.toml /app/Cargo.toml
 
 RUN cargo build --release
 
