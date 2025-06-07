@@ -5,30 +5,39 @@ use serde_json::Value;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let bootstrap_servers = std::env::var("KAFKA_BOOTSTRAP_SERVERS")
-        .expect("KAFKA_BOOTSTRAP_SERVERS environment variable must be set");
+    let bootstrap_servers = std::env::var("KAFKA_BOOTSTRAP_SERVERS").unwrap_or("localhost:30001".to_string());
+    let security_protocol = std::env::var("KAFKA_SECURITY_PROTOCOL").unwrap_or("PLAINTEXT".to_string());
+
     let consumer: StreamConsumer = ClientConfig::new()
         .set("bootstrap.servers", &bootstrap_servers)
         .set("group.id", "binance-consumer-group")
         .set("enable.auto.commit", "true")
         .set("auto.offset.reset", "earliest")
+        .set("security.protocol", &security_protocol)
         .create()
         .expect("Error creating consumer");
 
-    consumer
-        .subscribe(&["binance-depth"])
-        .expect("Error subscribing to topic");
+    println!("Subscribing to topic: binance-depth");
+    consumer.subscribe(&["binance-depth"]).expect("Error subscribing to topic");
 
-    println!("Consumer started, waiting for Binance API data...");
+    println!("Consumer started, waiting for messages...");
 
     loop {
         match consumer.recv().await {
             Err(e) => eprintln!("Error receiving message: {:?}", e),
             Ok(msg) => {
+                println!(
+                    "Received message: topic={}, partition={}, offset={}",
+                    msg.topic(),
+                    msg.partition(),
+                    msg.offset()
+                );
                 if let Some(payload) = msg.payload() {
                     let message = String::from_utf8_lossy(payload);
+                    println!("Raw payload: {}", message);
                     match serde_json::from_str::<Value>(&message) {
                         Ok(json) => {
+                            println!("Parsed JSON: {:?}", json);
                             let best_bid = json["bids"]
                                 .as_array()
                                 .and_then(|bids| bids.get(0))
@@ -41,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 .map(|ask| ask[0].as_str().unwrap_or("N/A"));
 
                             println!(
-                                "Received: topic={}, partition={}, offset={}, Best Bid={}, Best Ask={}",
+                                "Processed: topic={}, partition={}, offset={}, Best Bid={}, Best Ask={}",
                                 msg.topic(),
                                 msg.partition(),
                                 msg.offset(),
@@ -50,7 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             );
                         }
                         Err(e) => eprintln!(
-                            "Error parsing JSON: topic={}, partition={}, offset={}, message={}, error={}",
+                            "Error parsing JSON: topic={}, partition={}, offset={}, message={:?}, error={}",
                             msg.topic(),
                             msg.partition(),
                             msg.offset(),
@@ -58,6 +67,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             e
                         ),
                     }
+                } else {
+                    eprintln!(
+                        "Received empty payload: topic={}, partition={}, offset={}",
+                        msg.topic(),
+                        msg.partition(),
+                        msg.offset()
+                    );
                 }
             }
         }

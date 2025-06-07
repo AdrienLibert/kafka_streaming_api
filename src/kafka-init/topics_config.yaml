@@ -2,3 +2,6 @@ topics:
   - binance-depth:
       partition: 1
       replication_factor: 1
+  - __consumer_offsets:
+      partition: 50
+      replication_factor: 1

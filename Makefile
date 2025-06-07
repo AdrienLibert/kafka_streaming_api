@@ -11,16 +11,15 @@ build:
 	docker build -t local/consumer -f src/kafka-consumer/Dockerfile src/kafka-consumer/
 
 
-start_deps:
+start:
 	helm install bitnami bitnami/kafka -n streaming --create-namespace -f helm/kafka/values-local.yaml
 	kubectl apply -f k8s/job_kafka.yaml
-	kubectl apply -f k8s/network-policy.yaml
 	kubectl apply -f k8s/producer.yaml
 	kubectl apply -f k8s/consumer.yaml
 
-stop_deps:
+stop:
 	helm uninstall --ignore-not-found bitnami -n streaming
 	kubectl delete --ignore-not-found pvc data-bitnami-kafka-controller-0 -n streaming
-	kubectl delete --ignore-not-found k8s/network-policy.yaml
-	kubectl delete --ignore-not-found k8s/producer.yaml
-	kubectl delete --ignore-not-found k8s/consumer.yaml
+	kubectl delete -f k8s/job_kafka.yaml -n streaming --ignore-not-found
+	kubectl delete -f k8s/producer.yaml -n streaming --ignore-not-found
+	kubectl delete -f k8s/consumer.yaml -n streaming --ignore-not-found

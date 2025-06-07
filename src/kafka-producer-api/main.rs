@@ -8,10 +8,13 @@ use tokio::time;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bootstrap_servers = std::env::var("KAFKA_BOOTSTRAP_SERVERS")
-        .expect("KAFKA_BOOTSTRAP_SERVERS environment variable must be set");
+        .unwrap_or("localhost:30001".to_string());
+    let security_protocol = std::env::var("KAFKA_SECURITY_PROTOCOL")
+        .unwrap_or("PLAINTEXT".to_string());
     let producer: FutureProducer = ClientConfig::new()
         .set("bootstrap.servers", &bootstrap_servers)
         .set("enable.idempotence", "true")
+        .set("security.protocol", &security_protocol)
         .create()
         .expect("Error producer");
 

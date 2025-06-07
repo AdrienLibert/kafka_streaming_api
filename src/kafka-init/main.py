@@ -1,7 +1,7 @@
-import yaml
 from confluent_kafka.admin import AdminClient, NewTopic
-from typing import List
+import yaml
 import os
+from typing import List
 
 def load_topic_config(file_path: str) -> List[dict]:
     try:
@@ -39,17 +39,28 @@ def create_kafka_topic():
 
     if new_topics:
         try:
-            admin_client.create_topics(new_topics)
-            print(f"Successfully created topics: {[t.topic for t in new_topics]}")
+            futures = admin_client.create_topics(new_topics)
+            for topic, future in futures.items():
+                try:
+                    future.result()
+                    print(f"Successfully created topic: {topic}")
+                except Exception as e:
+                    print(f"Failed to create topic {topic}: {e}")
         except Exception as e:
             print(f"Failed to create topics: {e}")
 
-    existing_topics = admin_client.list_topics(timeout=10).topics
-    for topic in new_topics:
-        if topic.topic in existing_topics:
-            print(f"Topic '{topic.topic}' is listed in Kafka")
-        else:
-            print(f"Topic '{topic.topic}' not found")
+    import time
+    time.sleep(2)
+
+    try:
+        existing_topics = admin_client.list_topics(timeout=10).topics
+        for topic in new_topics:
+            if topic.topic in existing_topics:
+                print(f"Topic '{topic.topic}' is listed in Kafka")
+            else:
+                print(f"Topic '{topic.topic}' not found")
+    except Exception as e:
+        print(f"Failed to list topics: {e}")
 
 if __name__ == "__main__":
     create_kafka_topic()
