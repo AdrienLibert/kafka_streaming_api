@@ -17,7 +17,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .create()
         .expect("Error creating consumer");
 
-    println!("Subscribing to topic: binance-depth");
     consumer.subscribe(&["binance-depth"]).expect("Error subscribing to topic");
 
     println!("Consumer started, waiting for messages...");
@@ -34,10 +33,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
                 if let Some(payload) = msg.payload() {
                     let message = String::from_utf8_lossy(payload);
-                    println!("Raw payload: {}", message);
                     match serde_json::from_str::<Value>(&message) {
                         Ok(json) => {
-                            println!("Parsed JSON: {:?}", json);
                             let best_bid = json["bids"]
                                 .as_array()
                                 .and_then(|bids| bids.get(0))

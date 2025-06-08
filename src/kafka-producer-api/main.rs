@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
             Err(e) => {
                 eprintln!("Error fetching Binance data: {:?}", e);
-                tokio::time::sleep(Duration::from_secs(5)).await;
+                tokio::time::sleep(Duration::from_secs(1)).await;
                 continue;
             }
         };
